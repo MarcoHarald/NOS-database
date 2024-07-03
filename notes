@@ -1,0 +1,33 @@
+[{"first_name":"Bob","last_name":"the Builder","email":"bob@lego.com","address_city":"Mantova","tags":"TV","phone_number":4321678901},{"first_name":"Whinnih","last_name":"the Pooh","email":"Whinnih@pooh.com","address_city":"Pavia","tags":"TV","phone_number":8643357802},{"first_name":"Lamu","last_name":"Lima","email":"lamu@google.com","address_city":"Sondrio","tags":"Donatore, Supervolontario","phone_number":8519901013},{"first_name":"Sam","last_name":"Altman","email":"sam@gmail.com","address_city":"Brescia","tags":"Donatore ","phone_number":3456432345}]
+
+
+
+
+
+
+user=User(
+    id='86b5c54f-590f-4dd2-8896-fdded607cd87', 
+    app_metadata={'provider': 'email', 'providers': ['email']}, 
+    user_metadata={'email': 'mh.conticini@gmail.com', 'email_verified': False, 'phone_verified': False, 'sub': '86b5c54f-590f-4dd2-8896-fdded607cd87'}, 
+    aud='authenticated', 
+    confirmation_sent_at=datetime.datetime(2024, 7, 1, 7, 52, 11, 652171, tzinfo=TzInfo(UTC)), 
+    recovery_sent_at=None, 
+    email_change_sent_at=None, 
+    new_email=None, invited_at=None, 
+    action_link=None, 
+    email='mh.conticini@gmail.com', 
+    phone='', 
+    created_at=datetime.datetime(2024, 7, 1, 7, 52, 11, 627909, tzinfo=TzInfo(UTC)), 
+    confirmed_at=datetime.datetime(2024, 7, 1, 7, 52, 49, 407076, tzinfo=TzInfo(UTC)), 
+    email_confirmed_at=datetime.datetime(2024, 7, 1, 7, 52, 49, 407076, tzinfo=TzInfo(UTC)), 
+    phone_confirmed_at=None, 
+    last_sign_in_at=datetime.datetime(2024, 7, 1, 8, 29, 49, 167177, tzinfo=TzInfo(UTC)), 
+    role='authenticated', 
+    updated_at=datetime.datetime(2024, 7, 1, 8, 29, 49, 168897, tzinfo=TzInfo(UTC)), 
+    identities=[UserIdentity(id='86b5c54f-590f-4dd2-8896-fdded607cd87', identity_id='7dc226cb-10e6-46a4-aa69-39e810170860', user_id='86b5c54f-590f-4dd2-8896-fdded607cd87', identity_data={'email': 'mh.conticini@gmail.com', 'email_verified': False, 'phone_verified': False, 'sub': '86b5c54f-590f-4dd2-8896-fdded607cd87'}, provider='email', created_at=datetime.datetime(2024, 7, 1, 7, 52, 11, 638681, tzinfo=TzInfo(UTC)), last_sign_in_at=datetime.datetime(2024, 7, 1, 7, 52, 11, 638619, tzinfo=TzInfo(UTC)), updated_at=datetime.datetime(2024, 7, 1, 7, 52, 11, 638681, tzinfo=TzInfo(UTC)))], factors=None) 
+
+session=Session(
+    provider_token=None, 
+    provider_refresh_token=None, 
+    access_token='eyJhbGciOiJIUzI1NiIsImtpZCI6IjRGVXQ3WlFtenRHMFdCQzAiLCJ0eXAiOiJKV1QifQ.eyJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzE5ODI2MTg5LCJpYXQiOjE3MTk4MjI1ODksImlzcyI6Imh0dHBzOi8vbnhxa3Nyd2RjanFxc3Jyc29taWQuc3VwYWJhc2UuY28vYXV0aC92MSIsInN1YiI6Ijg2YjVjNTRmLTU5MGYtNGRkMi04ODk2LWZkZGVkNjA3Y2Q4NyIsImVtYWlsIjoibWguY29udGljaW5pQGdtYWlsLmNvbSIsInBob25lIjoiIiwiYXBwX21ldGFkYXRhIjp7InByb3ZpZGVyIjoiZW1haWwiLCJwcm92aWRlcnMiOlsiZW1haWwiXX0sInVzZXJfbWV0YWRhdGEiOnsiZW1haWwiOiJtaC5jb250aWNpbmlAZ21haWwuY29tIiwiZW1haWxfdmVyaWZpZWQiOmZhbHNlLCJwaG9uZV92ZXJpZmllZCI6ZmFsc2UsInN1YiI6Ijg2YjVjNTRmLTU5MGYtNGRkMi04ODk2LWZkZGVkNjA3Y2Q4NyJ9LCJyb2xlIjoiYXV0aGVudGljYXRlZCIsImFhbCI6ImFhbDEiLCJhbXIiOlt7Im1ldGhvZCI6InBhc3N3b3JkIiwidGltZXN0YW1wIjoxNzE5ODIyNTg5fV0sInNlc3Npb25faWQiOiI1ZWIzNjk5YS0wYzY4LTRkOGYtYmM1Zi1hYWI5MTkzMDJhNWYiLCJpc19hbm9ueW1vdXMiOmZhbHNlfQ.9VhuhwXlwDl7G-CDpJmBvHLaUkIX-X8vYVX68ETOMf8', 
+    refresh_token='7ODO0WYsYSSJo3RheNaKCA', expires_in=3600, expires_at=1719826189, token_type='bearer', user=User(id='86b5c54f-590f-4dd2-8896-fdded607cd87', app_metadata={'provider': 'email', 'providers': ['email']}, user_metadata={'email': 'mh.conticini@gmail.com', 'email_verified': False, 'phone_verified': False, 'sub': '86b5c54f-590f-4dd2-8896-fdded607cd87'}, aud='authenticated', confirmation_sent_at=datetime.datetime(2024, 7, 1, 7, 52, 11, 652171, tzinfo=TzInfo(UTC)), recovery_sent_at=None, email_change_sent_at=None, new_email=None, invited_at=None, action_link=None, email='mh.conticini@gmail.com', phone='', created_at=datetime.datetime(2024, 7, 1, 7, 52, 11, 627909, tzinfo=TzInfo(UTC)), confirmed_at=datetime.datetime(2024, 7, 1, 7, 52, 49, 407076, tzinfo=TzInfo(UTC)), email_confirmed_at=datetime.datetime(2024, 7, 1, 7, 52, 49, 407076, tzinfo=TzInfo(UTC)), phone_confirmed_at=None, last_sign_in_at=datetime.datetime(2024, 7, 1, 8, 29, 49, 167177, tzinfo=TzInfo(UTC)), role='authenticated', updated_at=datetime.datetime(2024, 7, 1, 8, 29, 49, 168897, tzinfo=TzInfo(UTC)), identities=[UserIdentity(id='86b5c54f-590f-4dd2-8896-fdded607cd87', identity_id='7dc226cb-10e6-46a4-aa69-39e810170860', user_id='86b5c54f-590f-4dd2-8896-fdded607cd87', identity_data={'email': 'mh.conticini@gmail.com', 'email_verified': False, 'phone_verified': False, 'sub': '86b5c54f-590f-4dd2-8896-fdded607cd87'}, provider='email', created_at=datetime.datetime(2024, 7, 1, 7, 52, 11, 638681, tzinfo=TzInfo(UTC)), last_sign_in_at=datetime.datetime(2024, 7, 1, 7, 52, 11, 638619, tzinfo=TzInfo(UTC)), updated_at=datetime.datetime(2024, 7, 1, 7, 52, 11, 638681, tzinfo=TzInfo(UTC)))], factors=None))
