@@ -1,0 +1,10 @@
+Streamlit dashboard to manage database:
+
+Page to view, filter, edit and download data. Filter options at the top and a grid containing the data with editable cells.
+
+Page to view key statistics. Number of users in the database, how many phone numbers, most popular cities, most popular events attended. 
+
+
+EXPANSIONS
+Google sheets integration. Setup integration that google sheets pushes new signups to supabase.
+Automatic welcome email from databas upon entering

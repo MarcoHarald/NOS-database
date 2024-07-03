@@ -59,7 +59,7 @@ def import_data(df: pd.DataFrame):
 def uploadData(df):
     data = supabase.table("users").upsert(df).execute() # , on_conflict='email'
     print(data)
-
+  
 
 # Sample usage
 if __name__ == "__main__":
