@@ -8,3 +8,34 @@ Page to view key statistics. Number of users in the database, how many phone num
 EXPANSIONS
 Google sheets integration. Setup integration that google sheets pushes new signups to supabase.
 Automatic welcome email from databas upon entering
+
+
+
+
+--
+
+hi, how are you? today is a fresh, new day. Please make a streamlit python app similar to crowdtangle, where users can track and analyze social media content performance. This streamline app will be used to measure engagement, track keywords, and identify trending content on instagram. The data will be pulled from supabase: each row is a post and the columns contain specific information (likes, comments, post link, post link image, post format, date of post. Please create an in depth streamline app using this information and your intuition.
+
+
+
+--
+
+
+hi, how are you? today is a fresh, new day. Please make a streamlit python app similar to crowdtangle, where users can track and analyze social media content performance. This streamline app will be used to measure engagement, track keywords, and identify trending content on instagram. The data will be pulled from supabase: each row is a post and the columns contain specific information (likes, comments, post link, post image link, post format, date of post, and at the account that published it). Please create an in depth streamline app that should be structured like so:
+
+Page one: a header section with key stats: number of posts, average number of likes per post, average number of comments per post, and average engagement rate. There will be a dropdown menu to select which account's statistics the user would like to view, the accounts are Nos, Partito Democratico and Fratelli d'Italia. Still on page one but below, there will be a section call 'Top Posts of the Week'. It will have a three wide grid containing the posts ranked by number of likes. Only the posts of the selected account will shown. There will be the image of the post (using the post image link), number of likes, engagement rate and a clickable link to view the post on instagram.
+
+Page two: a header section with graphs showcasing the evolution of the key stats over time: number of posts per week, average number of likes per post, average number of comments per post, and average engagement rate. Plotted will be the data for the accounts Nos, Partito Democratico and Fratelli d'Italia. Still on page two but below, there will be a section call 'Top Posts of the Week'. It will have a three wide grid containing the posts ranked by number of likes. There will be the image of the post (using the post image link), number of likes, engagement rate and a clickable link to view the post on instagram.
+
+
+
+
+
+
+
+
+
+
+
+
+

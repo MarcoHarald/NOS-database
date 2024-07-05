@@ -8,47 +8,118 @@ import os
 from dotenv import load_dotenv
 load_dotenv()
 
-# Initialize Supabase client
+# Initialize Supabase client 
 url = os.environ.get("SUPABASE_URL")
 key = os.environ.get("SUPABASE_KEY")
 supabase: Client = create_client(url, key)
 
 # Load data from Supabase
 @st.cache_data(ttl=60)
-def load_data():
-    response = supabase.table('user_data').select('*').execute()
+def load_data(supabase_table):
+    response = supabase.table(supabase_table).select('*').execute()
     return pd.DataFrame(response.data)
 
-def update_data(data):
+def update_data(data, supabase_table):
     for index, row in data.iterrows():
-        supabase.table('user_data').update(row.to_dict()).eq('id', row['id']).execute()
+        #DEBUG
+        st.write('updating:', index, row)
+        supabase.table(supabase_table).update(row.to_dict()).eq('nationbuilder_id', row['nationbuilder_id']).execute()
 
-def upload_data(df):
-    for index, row in df.iterrows():
-        email = row['email']
-        tag_list = row['tag_list'].split(',') if 'tag_list' in row else []
-        
-        # Check if user already exists
-        existing_user = supabase.table('user_data').select('*').eq('email', email).execute()
-        
-        if existing_user.data:
-            # User exists, update their tag_list
-            user_id = existing_user.data[0]['id']
-            current_tag_list = existing_user.data[0]['tag_list']
-            updated_tag_list = list(set(current_tag_list + tag_list))
-            supabase.table('user_data').update({'tag_list': updated_tag_list}).eq('id', user_id).execute()
+def update_user(existing_user, new_data_on_user):
+    row = new_data_on_user
+
+    # For a given user, update their tag_list
+    user_id = existing_user.data[0]['nationbuilder_id']
+    current_tag_list = existing_user.data[0]['tag_list']
+
+    # if new tags are being added, process them:
+    tag_list = row['tag_list'] if 'tag_list' in row else []
+    if tag_list:
+
+        # Merge tags. Else if no prior tags, simply overwrite
+        if current_tag_list:
+            updated_tag_list = current_tag_list.split(',') + tag_list.split(',')
+
         else:
-            # User does not exist, insert new record
-            new_user = row.to_dict()
-            #new_user['tag_list'] = tag_list
-            supabase.table('user_data').insert(new_user).execute()
+            updated_tag_list = tag_list.split(',')
+
+        # Remove spaces, only keep unique values, format list into human friendly string. 
+        updated_tag_list = [x.strip() for x in updated_tag_list]
+        updated_tag_list = list(set(updated_tag_list))
+        updated_tag_list = ', '.join(str(x) for x in updated_tag_list)
+        existing_user.data[0]['tag_list'] = updated_tag_list
+    
+    supabase.table(supabase_table).update(existing_user.data[0]).eq('nationbuilder_id', user_id).execute()
+    return existing_user.data[0]
+
+def upload_data(df, supabase_table):
+
+    # List of rows that failed to upload. Shared as a report after. 
+    error_list = []
+
+    for index, row in df.iterrows():
+        
+     # search & match user by email
+        try:
+            # Check if user already exists
+            existing_user = supabase.table(supabase_table).select('*').eq('email', row['email']).execute()
+            if existing_user.data:
+                update_user(existing_user, row)
+                         
+            else:
+                # User does not exist, insert new record
+                new_user = row.to_dict()
+                supabase.table(supabase_table).insert(new_user).execute()
+
+
+     # if no email, search & match user by phone number
+        except:  
+            try:
+                # Check if user already exists
+                existing_user = supabase.table(supabase_table).select('*').eq('phone_number', row['phone_number']).execute()
+                if existing_user.data:
+                    update_user(existing_user, row)
+                            
+                else:
+                    # User does not exist, insert new record
+                    new_user = row.to_dict()
+                    supabase.table(supabase_table).insert(new_user).execute()
+            
+     # neither email, nor phone number, show error
+            except: 
+                error_list += [row]
+
+     # display all the rows that had import errors
+    if error_list:
+        st.title('(!) error uploading')
+        st.write('Some of your data was not uploaded. Every line needs either an email or phone number. Please check & re-upload.')
+        st.dataframe(error_list)
+
+
+
 
 # Page 1: View, Filter, Edit, and Download Data
-def page_one():
-    st.title("Manage Users Data")
+def page_one(supabase_table):
+    st.title("Manage User's Data")
     
     # Load data
-    data = load_data()
+    data = load_data(supabase_table)
+
+    # Create three buttons in three columns side by side
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        if st.button("Filter"):
+            st.write("Choose your filters...")
+
+    with col2:
+        if st.button("Update data"):
+            st.write("Your edits have been imported")
+
+    with col3:
+        if st.button("Download"):
+            st.write("Downloading with filters...")
+
 
     # Filter options
     st.sidebar.subheader('Filter Data')
@@ -62,7 +133,7 @@ def page_one():
         data = data[data['tag_list'].apply(lambda x: filter_tag in x)]
 
     # Editable data grid
-    st.subheader("User Data")
+    #st.subheader("User Data")
     gb = GridOptionsBuilder.from_dataframe(data)
     gb.configure_pagination()
     gb.configure_default_column(editable=True)
@@ -79,7 +150,8 @@ def page_one():
     selected_rows = grid_response['selected_rows']
 
     if st.button('Update Data'):
-        update_data(pd.DataFrame(updated_data))
+
+        update_data(pd.DataFrame(updated_data), supabase_table)
         st.success('Data updated successfully!')
 
     # Download data
@@ -93,10 +165,10 @@ def page_one():
     )
 
 # Page 2: Key Statistics
-def page_two():
+def page_two(supabase_table):
     st.title("User Statistics")
     
-    data = load_data()
+    data = load_data(supabase_table)
 
     st.subheader("Total Number of Users")
     total_users = data.shape[0]
@@ -115,24 +187,26 @@ def page_two():
     st.write(all_tags)
 
 # Page 3: Upload CSV and Match Columns
-def page_three():
+def page_three(supabase_table):
     st.title("Upload CSV Data")
 
     uploaded_file = st.file_uploader("Choose a CSV file", type="csv")
     if uploaded_file is not None:
         df = pd.read_csv(uploaded_file)
-        st.subheader("Uploaded Data")
+        st.subheader("1. Upload Data")
+        st.write('Here is the file you uploaded:')
         st.write(df.head())
+        st.write('')
 
         # Match columns
-        st.subheader("Match Columns")
+        st.subheader("2. Match Columns")
         supabase_columns = ['first_name','last_name', 'email', 'phone_number', 'address_city', 'tag_list']
         
         column_mapping = {}
         selected_columns = []
         
         for csv_column in df.columns:
-            selected_column = st.selectbox(f'Match {csv_column}', [''] + supabase_columns)
+            selected_column = st.selectbox(f'Match:   {csv_column}', [''] + supabase_columns)
 
             if selected_column:
                 column_mapping[csv_column] = selected_column
@@ -141,20 +215,26 @@ def page_three():
         # Rename & filter columns based on the mapping
         df.rename(columns=column_mapping, inplace=True)
         df = df[selected_columns]
-        st.subheader("Selected Data")
+        st.subheader("3. Review & Send to Database")
         st.write(df.head())
 
         if st.button('Upload Data'):
-            upload_data(df[selected_columns])
+            upload_data(df[selected_columns],supabase_table)
             st.success('Data uploaded successfully!')
+
+        
 
 # Sidebar Navigation
 st.sidebar.title("Navigation")
-page = st.sidebar.radio("Go to", ["Manage Data", "View Statistics", "Upload CSV"])
+page = st.sidebar.radio("Go to", ["Manage Database", "Key Stats", "Import Data"])
 
-if page == "Manage Data":
-    page_one()
-elif page == "View Statistics":
-    page_two()
+supabase_table = 'db_2'
+
+if page == "Manage Database":
+    page_one(supabase_table)
+elif page == "Key Stats":
+    page_two(supabase_table)
+elif page == "Import Data":
+    page_three(supabase_table)
 else:
-    page_three()
+    st.subtitle('Select a page')

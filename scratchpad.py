@@ -1,3 +1,3 @@
-mydict = {1: 'Geeks', 2: 'for', 3: 'geeks'}
-keysList = list(mydict.keys())
-print(keysList)
+xs = [1, 2, 3]
+s = ', '.join(str(x) for x in xs)
+print(s)
