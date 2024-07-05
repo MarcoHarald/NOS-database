@@ -14,16 +14,16 @@ key = os.environ.get("SUPABASE_KEY")
 supabase: Client = create_client(url, key)
 
 # Load data from Supabase
-@st.cache_data(ttl=60)
+#@st.cache_data(ttl=60)
 def load_data(supabase_table):
     response = supabase.table(supabase_table).select('*').execute()
     return pd.DataFrame(response.data)
 
-def update_data(data, supabase_table):
+def update_data(data, supabase_table_name):
     for index, row in data.iterrows():
         #DEBUG
         st.write('updating:', index, row)
-        supabase.table(supabase_table).update(row.to_dict()).eq('nationbuilder_id', row['nationbuilder_id']).execute()
+        supabase.table(supabase_table_name).update(row.to_dict()).eq('nationbuilder_id', row['nationbuilder_id']).execute()
 
 def update_user(existing_user, new_data_on_user):
     row = new_data_on_user
@@ -49,7 +49,7 @@ def update_user(existing_user, new_data_on_user):
         updated_tag_list = ', '.join(str(x) for x in updated_tag_list)
         new_data_on_user.data[0]['tag_list'] = updated_tag_list
     
-    supabase.table(supabase_table).update(new_data_on_user.data[0]).eq('nationbuilder_id', user_id).execute()
+    supabase.table(supabase_table).update(new_data_on_user.to_dict()).eq('nationbuilder_id', user_id).execute()
     return existing_user.data[0]
 
 def upload_data(df, supabase_table):
@@ -63,16 +63,9 @@ def upload_data(df, supabase_table):
         try:
             # Check if user already exists
             existing_user = supabase.table(supabase_table).select('*').eq('email', row['email']).execute()
-            
-            # DEBUG 
-            st.write('pre-push:', existing_user.data[0])
-            
+          
             if existing_user.data:
                 update_user(existing_user, row)
-
-                # DEBUG 
-                updated_user = supabase.table(supabase_table).select('*').eq('email', row['email']).execute()
-                st.write('post-push:', updated_user.data[0])
                          
             else:
                 # User does not exist, insert new record
@@ -133,8 +126,16 @@ def page_one(supabase_table):
 
     # Filter options
     st.sidebar.subheader('Filter Data')
+    filter_firstname = st.sidebar.text_input('First name')
+    filter_lastname = st.sidebar.text_input('Last name')
     filter_city = st.sidebar.text_input('City')
     filter_tag = st.sidebar.text_input('Tag')
+
+    if filter_firstname:
+        data = data[data['first_name'].str.contains(filter_firstname, case=False, na=False)]
+
+    if filter_lastname:
+        data = data[data['last_name'].str.contains(filter_lastname, case=False, na=False)]
 
     if filter_city:
         data = data[data['address_city'].str.contains(filter_city, case=False, na=False)]
@@ -193,8 +194,14 @@ def page_two(supabase_table):
     st.write(popular_cities)
 
     st.subheader("Most Popular Tags")
-    all_tags = data['tag_list'].explode().value_counts().head(10)
+    
+    # tags cleanly separated. Useful for reference and use.
+    all_tags_separated = data['tag_list'].str.split(',')
+
+    # frequency of tags. For combinations of tags remove [str.split()]
+    all_tags = data['tag_list'].str.split(', ').explode().value_counts()
     st.write(all_tags)
+
 
 # Page 3: Upload CSV and Match Columns
 def page_three(supabase_table):
