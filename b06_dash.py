@@ -19,17 +19,16 @@ def load_data(supabase_table):
     response = supabase.table(supabase_table).select('*').execute()
     return pd.DataFrame(response.data)
 
-def update_data(data, supabase_table_name):
-    for index, row in data.iterrows():
-        #DEBUG
-        st.write('updating:', index, row)
+# updates batch of users. Simply overwrites old data.
+def update_manyUsers(new_user_data, supabase_table_name):
+    for index, row in new_user_data.iterrows():
         supabase.table(supabase_table_name).update(row.to_dict()).eq('nationbuilder_id', row['nationbuilder_id']).execute()
 
-def update_user(existing_user, new_data_on_user):
+# for a single user, combines old tag data with new tag data.
+def combine_tags(existing_user, new_data_on_user):
     row = new_data_on_user
 
     # For a given user, update their tag_list
-    user_id = existing_user.data[0]['nationbuilder_id']
     current_tag_list = existing_user.data[0]['tag_list']
 
     # if new tags are being added, process them:
@@ -49,14 +48,15 @@ def update_user(existing_user, new_data_on_user):
         updated_tag_list = ', '.join(str(x) for x in updated_tag_list)
         new_data_on_user.data[0]['tag_list'] = updated_tag_list
     
-    supabase.table(supabase_table).update(new_data_on_user.to_dict()).eq('nationbuilder_id', user_id).execute()
-    return existing_user.data[0]
+    return new_data_on_user.data[0]
 
+# Processes CSV imports. Updates/Inserts user information.
 def upload_data(df, supabase_table):
 
     # List of rows that failed to upload. Shared as a report after. 
     error_list = []
 
+    # Loop through each row. Search for user, update user. If user not found, create new entry.
     for index, row in df.iterrows():
         
      # search & match user by email
@@ -64,8 +64,11 @@ def upload_data(df, supabase_table):
             # Check if user already exists
             existing_user = supabase.table(supabase_table).select('*').eq('email', row['email']).execute()
           
-            if existing_user.data:
-                update_user(existing_user, row)
+            if existing_user.data: # if user exists: combine tags, then update that user
+                new_data_on_user = combine_tags(existing_user, row)
+                user_id = existing_user.data[0]['nationbuilder_id']
+                supabase.table(supabase_table).update(new_data_on_user.to_dict()).eq('nationbuilder_id', user_id).execute()
+
                          
             else:
                 # User does not exist, insert new record
@@ -81,7 +84,10 @@ def upload_data(df, supabase_table):
                 # Check if user already exists
                 existing_user = supabase.table(supabase_table).select('*').eq('phone_number', row['phone_number']).execute()
                 if existing_user.data:
-                    update_user(existing_user, row)
+                    # if user exists: combine tags, then update that user
+                    new_data_on_user = combine_tags(existing_user, row)
+                    user_id = existing_user.data[0]['nationbuilder_id']
+                    supabase.table(supabase_table).update(new_data_on_user.to_dict()).eq('nationbuilder_id', user_id).execute()
                             
                 else:
                     # User does not exist, insert new record
@@ -162,7 +168,7 @@ def page_one(supabase_table):
 
     if st.button('Update Data'):
 
-        update_data(pd.DataFrame(updated_data), supabase_table)
+        update_manyUsers(pd.DataFrame(updated_data), supabase_table)
         st.success('Data updated successfully!')
 
     # Download data
