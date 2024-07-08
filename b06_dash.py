@@ -4,6 +4,8 @@ from supabase import create_client, Client
 from st_aggrid import AgGrid, GridOptionsBuilder
 from st_aggrid.shared import GridUpdateMode
 from io import BytesIO
+from datetime import datetime
+from dateutil import parser
 import os
 from dotenv import load_dotenv
 load_dotenv()
@@ -104,18 +106,27 @@ def upload_data(df, supabase_table):
         st.write('Some of your data was not uploaded. Every line needs either an email or phone number. Please check & re-upload.')
         st.dataframe(error_list)
 
-
+# reorder columns of a dataset to display most relevant first. Uses standard items.  
+def reorder_columns(data, featured_columns):
+    # Using desired order to change column
+    df = data
+    featured_columns = ['nationbuilder_id', 'first_name', 'last_name', 'address_city', 'tag_list', 'email', 'phone_number']
+    df2 = df[ featured_columns + [ col for col in df.columns if col not in featured_columns]]
+    return df2
 
 
 # Page 1: View, Filter, Edit, and Download Data
 def page_one(supabase_table):
     st.title("Manage User's Data")
     
-    # Load data
+    # Load data & re-order
     data = load_data(supabase_table)
+    data = reorder_columns(data, 'standard')
+    csv_data = data.to_csv(index=False).encode()
 
     # Create three buttons in three columns side by side
     col1, col2, col3 = st.columns(3)
+
 
     with col1:
         if st.button("Filter"):
@@ -126,16 +137,23 @@ def page_one(supabase_table):
             st.write("Your edits have been imported")
 
     with col3:
-        if st.button("Download"):
+        if st.button("Download data"):
             st.write("Downloading with filters...")
 
 
+
+    # Filter setup            
+    full_tag_list = data['tag_list'].str.split(',').explode().unique()
+    preselected_tags = ['']
+    
+    
     # Filter options
     st.sidebar.subheader('Filter Data')
     filter_firstname = st.sidebar.text_input('First name')
     filter_lastname = st.sidebar.text_input('Last name')
     filter_city = st.sidebar.text_input('City')
-    filter_tag = st.sidebar.text_input('Tag')
+    filter_tag = st.sidebar.multiselect("Tags", full_tag_list, preselected_tags)
+
 
     if filter_firstname:
         data = data[data['first_name'].str.contains(filter_firstname, case=False, na=False)]
@@ -147,7 +165,12 @@ def page_one(supabase_table):
         data = data[data['address_city'].str.contains(filter_city, case=False, na=False)]
     
     if filter_tag:
-        data = data[data['tag_list'].apply(lambda x: filter_tag in x)]
+        # Simple text search within the tags
+        #data = data[data['tag_list'].str.contains(filter_tag, case=False, na=False)]
+        
+        # Search by multiple tags
+        #data = data['tag_list'].str.split(',').explode() #.to_list()
+        data['tag_list'] = data['tag_list'].str.split(',')
 
     # Editable data grid
     #st.subheader("User Data")
@@ -208,7 +231,16 @@ def page_two(supabase_table):
     all_tags = data['tag_list'].str.split(', ').explode().value_counts()
     st.write(all_tags)
 
-
+    # when users signed up
+    st.subheader('Signup Trends')
+    # convert to datetime, extract weeknum & monthnum
+    data['created_at'] = pd.to_datetime(data['created_at'])
+    data['created_at_week'] = data['created_at'].dt.strftime('%U')
+    data['created_at_month'] =  data['created_at'].dt.month    
+    df_weeknum = data.groupby(['created_at_week']).count() # index displays week_num
+    df_weeknum = df_weeknum['email']  # only select one column to show count_number
+    st.write(df_weeknum)
+    
 # Page 3: Upload CSV and Match Columns
 def page_three(supabase_table):
     st.title("Upload CSV Data")
@@ -228,9 +260,11 @@ def page_three(supabase_table):
         column_mapping = {}
         selected_columns = []
         
+        # for every column in the import file, ask user which columns to import & what to name them
         for csv_column in df.columns:
             selected_column = st.selectbox(f'Match:   {csv_column}', [''] + supabase_columns)
 
+            # Append user-matched-columns to an import table
             if selected_column:
                 column_mapping[csv_column] = selected_column
                 selected_columns.append(selected_column)
@@ -249,9 +283,9 @@ def page_three(supabase_table):
 
 # Sidebar Navigation
 st.sidebar.title("Navigation")
-page = st.sidebar.radio("Go to", ["Manage Database", "Key Stats", "Import Data"])
+page = st.sidebar.radio("Go to", ["Manage Database", "Key Stats", "Import Data", 'Bonus'])
 
-supabase_table = 'db_2'
+supabase_table = 'user_data'
 
 if page == "Manage Database":
     page_one(supabase_table)
@@ -260,4 +294,12 @@ elif page == "Key Stats":
 elif page == "Import Data":
     page_three(supabase_table)
 else:
-    st.subtitle('Select a page')
+    st.subheader('Select a page')
+
+    # TESTING : REORDER COLUMNS
+    data = load_data(supabase_table)
+    data = reorder_columns(data, 'standard')
+    st.dataframe(data)
+    
+
+
