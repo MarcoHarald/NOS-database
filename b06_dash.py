@@ -16,7 +16,7 @@ key = os.environ.get("SUPABASE_KEY")
 supabase: Client = create_client(url, key)
 
 # Load data from Supabase
-#@st.cache_data(ttl=60)
+@st.cache_data(ttl=60)
 def load_data(supabase_table):
     response = supabase.table(supabase_table).select('*').execute()
     return pd.DataFrame(response.data)
@@ -48,9 +48,10 @@ def combine_tags(existing_user, new_data_on_user):
         updated_tag_list = [x.strip() for x in updated_tag_list]
         updated_tag_list = list(set(updated_tag_list))
         updated_tag_list = ', '.join(str(x) for x in updated_tag_list)
-        new_data_on_user.data[0]['tag_list'] = updated_tag_list
+        new_data_on_user['tag_list'] = updated_tag_list
+        #new_data_on_user.data[0]['tag_list'] = updated_tag_list
     
-    return new_data_on_user.data[0]
+    return new_data_on_user
 
 # Processes CSV imports. Updates/Inserts user information.
 def upload_data(df, supabase_table):
@@ -63,12 +64,14 @@ def upload_data(df, supabase_table):
         
      # search & match user by email
         try:
+
             # Check if user already exists
             existing_user = supabase.table(supabase_table).select('*').eq('email', row['email']).execute()
           
             if existing_user.data: # if user exists: combine tags, then update that user
                 new_data_on_user = combine_tags(existing_user, row)
-                user_id = existing_user.data[0]['nationbuilder_id']
+
+                user_id = existing_user.data[0]['nationbuilder_id']                
                 supabase.table(supabase_table).update(new_data_on_user.to_dict()).eq('nationbuilder_id', user_id).execute()
 
                          
@@ -81,7 +84,11 @@ def upload_data(df, supabase_table):
             
 
      # if no email, search & match user by phone number
-        except:  
+        except Exception as error_track:
+
+            st.write('DEBUG upload_data:',error_track)
+            st.write('---')
+
             try:
                 # Check if user already exists
                 existing_user = supabase.table(supabase_table).select('*').eq('phone_number', row['phone_number']).execute()
@@ -124,27 +131,10 @@ def page_one(supabase_table):
     data = reorder_columns(data, 'standard')
     csv_data = data.to_csv(index=False).encode()
 
-    # Create three buttons in three columns side by side
-    col1, col2, col3 = st.columns(3)
-
-
-    with col1:
-        if st.button("Filter"):
-            st.write("Choose your filters...")
-
-    with col2:
-        if st.button("Update data"):
-            st.write("Your edits have been imported")
-
-    with col3:
-        if st.button("Download data"):
-            st.write("Downloading with filters...")
-
-
-
+ 
     # Filter setup            
     full_tag_list = data['tag_list'].str.split(',').explode().unique()
-    preselected_tags = ['']
+    preselected_tags = []
     
     
     # Filter options
@@ -189,20 +179,34 @@ def page_one(supabase_table):
     updated_data = grid_response['data']
     selected_rows = grid_response['selected_rows']
 
-    if st.button('Update Data'):
+   # Create three buttons in three columns side by side
+    col1, col2, col3 = st.columns(3)
 
-        update_manyUsers(pd.DataFrame(updated_data), supabase_table)
-        st.success('Data updated successfully!')
 
-    # Download data
-    st.subheader("Download Data")
+    with col1:
+        if st.button("Filter"):
+            st.write("Choose your filters...")
+
+    with col2: # update data
+        if st.button("Update data"):
+            # remove artificially added column
+            updated_data = updated_data.drop('created_date', axis=1)
+
+            update_manyUsers(pd.DataFrame(updated_data), supabase_table)
+            st.success('Data updated successully!')
+        
+
+
+    # preparing data for export:
     csv_data = data.to_csv(index=False).encode()
-    st.download_button(
+
+    with col3:
+        st.download_button(
         label="Download as CSV",
         data=csv_data,
         file_name='user_data.csv',
-        mime='text/csv'
-    )
+        mime='text/csv')
+
 
 # Page 2: Key Statistics
 def page_two(supabase_table):
@@ -296,10 +300,13 @@ elif page == "Import Data":
 else:
     st.subheader('Select a page')
 
-    # TESTING : REORDER COLUMNS
-    data = load_data(supabase_table)
-    data = reorder_columns(data, 'standard')
-    st.dataframe(data)
+    # REORDER COLUMNS
+    # data = load_data(supabase_table)
+    # data = reorder_columns(data, 'standard')
+    # st.dataframe(data)
+
+    # DELETE ROWS
+    # response = supabase.table(supabase_table).delete().eq('nationbuilder_id', 2).execute()
     
 
 
