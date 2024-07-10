@@ -16,7 +16,7 @@ key = os.environ.get("SUPABASE_KEY")
 supabase: Client = create_client(url, key)
 
 # Load data from Supabase
-@st.cache_data(ttl=60)
+@st.cache_data
 def load_data(supabase_table):
     response = supabase.table(supabase_table).select('*').execute()
     return pd.DataFrame(response.data)

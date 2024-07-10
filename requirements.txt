@@ -1,0 +1,7 @@
+streamlit
+pandas
+supabase
+st_aggrid
+io
+datetime
+dateutil
