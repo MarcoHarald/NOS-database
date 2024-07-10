@@ -129,7 +129,7 @@ def page_one(supabase_table):
     # Load data & re-order
     data = load_data(supabase_table)
     data = reorder_columns(data, 'standard')
-    csv_data = data.to_csv(index=False).encode()
+    #csv_data = data.to_csv(index=False).encode()
 
  
     # Filter setup            
