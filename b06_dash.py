@@ -16,7 +16,7 @@ key = os.environ.get("SUPABASE_KEY")
 supabase: Client = create_client(url, key)
 
 # Load data from Supabase
-@st.cache_data
+# @st.cache_data
 def load_data(supabase_table):
     response = supabase.table(supabase_table).select('*').execute()
     return pd.DataFrame(response.data)
@@ -122,6 +122,90 @@ def reorder_columns(data, featured_columns):
     return df2
 
 
+
+def plot_line_graph(data, title, x_col, y_col, x_label, y_label):
+    import streamlit as st
+    import pandas as pd
+    import plotly.express as px
+    import numpy as np
+
+    # Sample data
+    if 1 == 2 :
+        data = pd.DataFrame({
+            'Date': pd.date_range(start='2023-01-01', periods=100),
+            'Value': np.random.randn(100).cumsum()
+        })
+
+        # Create the line chart
+        fig = px.line(data, x='Date', y='Value', 
+                    title='Beautiful Line Chart Example',
+                    labels={'Value': 'Cumulative Value'},
+                    line_shape='spline',
+                    render_mode='svg')
+
+    # Real data
+    fig = px.line(data, x=x_col, y=y_col, 
+                title=title,
+                labels={y_col: y_label},
+                line_shape='spline',
+                render_mode='svg')
+
+    # Customize the layout
+    fig.update_layout(
+        plot_bgcolor='white',
+        paper_bgcolor='white',
+        font=dict(family='Arial', size=12, color='#1f77b4'),
+        title=dict(font=dict(size=24, color='#1f77b4')),
+        xaxis=dict(showgrid=False, zeroline=False),
+        yaxis=dict(showgrid=True, gridcolor='#E5ECF6', zeroline=False),
+    )
+
+    # Customize the line
+    fig.update_traces(line=dict(color='#1f77b4', width=3))
+
+    # Display the chart in Streamlit
+    st.plotly_chart(fig, use_container_width=True)
+
+def plot_bar_chart(data, title, x_col, y_col, x_label, y_label):
+    import streamlit as st
+    import pandas as pd
+    import plotly.express as px
+    import numpy as np
+
+    # Sample data
+    categories = ['A', 'B', 'C', 'D', 'E']
+    values = np.random.randint(10, 100, size=len(categories))
+    # data = pd.DataFrame({'Category': categories, 'Value': values})
+
+    # Create the bar chart
+    fig = px.bar(data, x=x_col, y=y_col,
+                title=title,
+                labels={y_col: y_label},
+                color=x_col)
+
+    # Customize the layout
+    fig.update_layout(
+        plot_bgcolor='white',
+        paper_bgcolor='white',
+        font=dict(family='Arial', size=12),
+        title=dict(font=dict(size=24, color='#2c3e50')),
+        xaxis=dict(showgrid=False, zeroline=False, title_font=dict(size=14)),
+        yaxis=dict(showgrid=True, gridcolor='#E5ECF6', zeroline=False, title_font=dict(size=14)),
+        coloraxis_colorbar=dict(title='Score', title_font=dict(size=14))
+    )
+
+    # Add hover effects and rounded corners to bars
+    fig.update_traces(
+        hoverinfo='y',
+        hovertemplate='%{y}',
+        marker=dict(line=dict(width=0), opacity=0.8),
+        selector=dict(type='bar')
+    )
+
+    # Display the chart in Streamlit
+    st.plotly_chart(fig, use_container_width=True)
+
+
 # Page 1: View, Filter, Edit, and Download Data
 def page_one(supabase_table):
     st.title("Manage User's Data")
@@ -155,12 +239,28 @@ def page_one(supabase_table):
         data = data[data['address_city'].str.contains(filter_city, case=False, na=False)]
     
     if filter_tag:
+
+        st.title('Table 1')
+        data2 = data['tag_list'].str.split(',')
+        st.write(data2)
+
+        st.title('Filter 1')
+        data = data[data['tag_list'].apply(lambda x: filter_tag in x)]
+
         # Simple text search within the tags
-        #data = data[data['tag_list'].str.contains(filter_tag, case=False, na=False)]
-        
         # Search by multiple tags
-        #data = data['tag_list'].str.split(',').explode() #.to_list()
-        data['tag_list'] = data['tag_list'].str.split(',')
+        # data2 = data['tag_list'].str.split(',').explode() #.to_list()
+        # data = data[data['tag_list'].str.contains(filter_tag, case=False, na=False)]
+
+        
+
+
+
+
+    # Display the filtered users
+
+        
+
 
     # Editable data grid
     #st.subheader("User Data")
@@ -189,8 +289,12 @@ def page_one(supabase_table):
 
     with col2: # update data
         if st.button("Update data"):
+
             # remove artificially added column
-            updated_data = updated_data.drop('created_date', axis=1)
+            try:
+                updated_data = updated_data.drop('created_date', axis=1)
+            except:
+                updated_data = updated_data
 
             update_manyUsers(pd.DataFrame(updated_data), supabase_table)
             st.success('Data updated successully!')
@@ -223,11 +327,12 @@ def page_two(supabase_table):
     st.write(users_with_phones)
 
     st.subheader("Most Popular Cities")
-    popular_cities = data['address_city'].value_counts().head(10)
+    popular_cities = data['address_city'].value_counts().head(10).reset_index()
+    plot_bar_chart(data=popular_cities, title='Cities', x_col='address_city', y_col='count', x_label='City', y_label='#')
     st.write(popular_cities)
 
+
     st.subheader("Most Popular Tags")
-    
     # tags cleanly separated. Useful for reference and use.
     all_tags_separated = data['tag_list'].str.split(',')
 
@@ -243,7 +348,14 @@ def page_two(supabase_table):
     data['created_at_month'] =  data['created_at'].dt.month    
     df_weeknum = data.groupby(['created_at_week']).count() # index displays week_num
     df_weeknum = df_weeknum['email']  # only select one column to show count_number
+    df_weeknum = df_weeknum.reset_index()
+    plot_line_graph(data=df_weeknum, title='Signup Trends', x_col='created_at_week', y_col='email', x_label='Signup week', y_label='# signups')
     st.write(df_weeknum)
+
+
+
+    
+
     
 # Page 3: Upload CSV and Match Columns
 def page_three(supabase_table):
@@ -289,7 +401,7 @@ def page_three(supabase_table):
 st.sidebar.title("Navigation")
 page = st.sidebar.radio("Go to", ["Manage Database", "Key Stats", "Import Data", 'Bonus'])
 
-supabase_table = 'user_data'
+supabase_table = 'db_2'
 
 if page == "Manage Database":
     page_one(supabase_table)
@@ -299,6 +411,8 @@ elif page == "Import Data":
     page_three(supabase_table)
 else:
     st.subheader('Select a page')
+    st.text('Review database:')
+    st.dataframe(load_data(supabase_table))
 
     # REORDER COLUMNS
     # data = load_data(supabase_table)
